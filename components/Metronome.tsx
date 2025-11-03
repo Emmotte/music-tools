@@ -3,6 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 const Metronome: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [bpm, setBpm] = useState(120);
+    const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
+    const [beatValue, setBeatValue] = useState(4); // For UI, doesn't change audio logic
+    const [isEditingBpm, setIsEditingBpm] = useState(false);
+    const [visualCurrentBeat, setVisualCurrentBeat] = useState(-1);
     
     const audioContextRef = useRef<AudioContext | null>(null);
     const nextNoteTimeRef = useRef<number>(0);
@@ -22,7 +26,8 @@ const Metronome: React.FC = () => {
         osc.connect(gain);
         gain.connect(audioContextRef.current.destination);
 
-        const isAccent = beatNumber % 4 === 0;
+        // Accent the first beat of the measure
+        const isAccent = beatNumber % beatsPerMeasure === 0;
         osc.frequency.value = isAccent ? 880.0 : 440.0;
         gain.gain.setValueAtTime(0.5, time); // Start with some volume
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
@@ -31,7 +36,9 @@ const Metronome: React.FC = () => {
         osc.stop(time + 0.1);
         
         // Visual feedback
+        const beatInMeasure = beatNumber % beatsPerMeasure;
         setTimeout(() => {
+            setVisualCurrentBeat(beatInMeasure);
             if(visualBeatRef.current) {
                 visualBeatRef.current.style.transform = 'scale(1.1)';
                 visualBeatRef.current.style.backgroundColor = isAccent ? '#22d3ee' : '#67e8f9';
@@ -56,6 +63,7 @@ const Metronome: React.FC = () => {
         }
     };
     
+    // Main scheduler effect
     useEffect(() => {
         if (isPlaying) {
             if (!audioContextRef.current) {
@@ -66,7 +74,7 @@ const Metronome: React.FC = () => {
             }
 
             nextNoteTimeRef.current = audioContextRef.current.currentTime + 0.1;
-            currentBeatRef.current = 0;
+            currentBeatRef.current = 0; // Reset beat count on play
             schedulerIntervalRef.current = window.setInterval(scheduler, lookahead);
         } else {
             clearInterval(schedulerIntervalRef.current);
@@ -75,11 +83,39 @@ const Metronome: React.FC = () => {
         return () => {
             clearInterval(schedulerIntervalRef.current);
         };
-    }, [isPlaying, bpm]);
+    }, [isPlaying, bpm, beatsPerMeasure]);
+
+    // Reset beat count if time signature changes while playing
+    useEffect(() => {
+        currentBeatRef.current = 0;
+        setVisualCurrentBeat(-1);
+    }, [beatsPerMeasure]);
 
     const handlePlayToggle = () => {
-        setIsPlaying(prev => !prev);
+        setIsPlaying(prevIsPlaying => {
+            if (prevIsPlaying) { // If we are about to stop
+                setVisualCurrentBeat(-1);
+            }
+            return !prevIsPlaying;
+        });
     };
+
+    const handleBpmInput = (newBpm: number) => {
+        if (newBpm >= 20 && newBpm <= 300) {
+            setBpm(newBpm);
+        }
+    }
+
+    const handleBpmBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const value = parseInt(e.target.value, 10);
+        if (isNaN(value) || value < 20) {
+            setBpm(20);
+        } else if (value > 300) {
+            setBpm(300);
+        }
+        setIsEditingBpm(false);
+    }
+
 
     return (
         <div className="bg-gray-700/50 rounded-lg p-4 flex flex-col items-center gap-4 h-full">
@@ -91,20 +127,80 @@ const Metronome: React.FC = () => {
                     className="absolute w-28 h-28 bg-cyan-600 rounded-full transition-all duration-100"
                     style={{transition: 'transform 0.05s ease-out, background-color 0.05s ease-out'}}>
                  </div>
-                 <div className="relative text-5xl font-mono font-bold text-white tracking-tighter">{bpm}</div>
+                 <div className="relative text-5xl font-mono font-bold text-white tracking-tighter">
+                    {isEditingBpm ? (
+                        <input
+                            type="number"
+                            value={bpm}
+                            onChange={(e) => handleBpmInput(parseInt(e.target.value, 10) || 0)}
+                            onBlur={handleBpmBlur}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                            className="w-32 text-center bg-transparent outline-none focus:ring-2 focus:ring-cyan-400 rounded-md"
+                            autoFocus
+                        />
+                    ) : (
+                        <div 
+                            onClick={() => setIsEditingBpm(true)}
+                            className="cursor-pointer px-2 py-1 rounded-md hover:bg-gray-700 transition-colors"
+                            aria-label="Edit BPM"
+                        >
+                            {bpm}
+                        </div>
+                    )}
+                 </div>
             </div>
            
             <p className="text-sm text-gray-400 -mt-2">BPM</p>
             
             <input
                 type="range"
-                min="40"
-                max="240"
+                min="20"
+                max="300"
                 value={bpm}
                 onChange={(e) => setBpm(Number(e.target.value))}
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                 aria-label="BPM Slider"
             />
+            <div className="flex justify-center gap-2 h-4 items-center">
+                {Array.from({ length: beatsPerMeasure }).map((_, index) => {
+                    const isCurrentBeat = index === visualCurrentBeat;
+                    const isFirstBeat = index === 0;
+
+                    const size = isCurrentBeat 
+                        ? (isFirstBeat ? 'w-3.5 h-3.5' : 'w-3 h-3') 
+                        : (isFirstBeat ? 'w-2.5 h-2.5' : 'w-2 h-2');
+
+                    const color = isCurrentBeat 
+                        ? (isFirstBeat ? 'bg-cyan-400' : 'bg-sky-400') 
+                        : 'bg-gray-500';
+
+                    return <div key={index} className={`${size} ${color} rounded-full transition-all duration-150 ease-in-out`} />;
+                })}
+            </div>
+             <div className="flex items-center gap-3 text-sm text-gray-400">
+                <label htmlFor="beatsPerMeasure" className="font-medium">Time Signature</label>
+                <div className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded-md">
+                    <select
+                        id="beatsPerMeasure"
+                        value={beatsPerMeasure}
+                        onChange={(e) => setBeatsPerMeasure(Number(e.target.value))}
+                        className="bg-transparent text-white focus:outline-none"
+                        aria-label="Beats per measure"
+                    >
+                        {[2,3,4,5,6,7].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                    <span>/</span>
+                    <select
+                        value={beatValue}
+                        onChange={(e) => setBeatValue(Number(e.target.value))}
+                         className="bg-transparent text-white focus:outline-none"
+                         aria-label="Beat value"
+                    >
+                        <option value={4}>4</option>
+                        <option value={8}>8</option>
+                    </select>
+                </div>
+            </div>
 
             <button
                 onClick={handlePlayToggle}
@@ -112,7 +208,6 @@ const Metronome: React.FC = () => {
                 aria-label={isPlaying ? 'Pause Metronome' : 'Play Metronome'}
             >
                 {isPlaying ? (
-                    // Fix: Cleaned up SVG for pause icon to remove extraneous paths.
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 9v6m4-6v6" />
                     </svg>

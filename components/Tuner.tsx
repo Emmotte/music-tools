@@ -46,6 +46,7 @@ const Tuner: React.FC<TunerProps> = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             
+            // FIX: Use a cross-browser compatible way to instantiate AudioContext to avoid constructor errors on older browsers.
             const context = new (window.AudioContext || (window as any).webkitAudioContext)();
             audioContextRef.current = context;
 

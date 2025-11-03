@@ -56,6 +56,8 @@ const App: React.FC = () => {
     const [identifiedChord, setIdentifiedChord] = useState<string | null>(null);
     const [identifiedRoot, setIdentifiedRoot] = useState<string | null>(null);
 
+    const [showBetaBanner, setShowBetaBanner] = useState(true);
+
 
     // Reset voicing index when core chord parameters change
     useEffect(() => {
@@ -284,11 +286,38 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased">
+            {showBetaBanner && (
+                <div className="w-full max-w-7xl mb-4 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-3 rounded-lg text-center text-sm flex items-center justify-between shadow-lg" role="alert">
+                    <div>
+                        <strong className="font-semibold">Beta Notice:</strong> This application is a work in progress. Features may change and you might encounter some bugs.
+                    </div>
+                    <button 
+                        onClick={() => setShowBetaBanner(false)} 
+                        className="ml-4 p-1 rounded-md text-amber-400 hover:bg-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        aria-label="Dismiss"
+                    >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            )}
             <header className="w-full max-w-7xl mb-8 text-center">
                 <h1 className="text-4xl sm:text-5xl font-bold text-cyan-400 tracking-wider">
                     Music Tools
                 </h1>
-                <p className="text-lg text-gray-400 mt-2">Your Interactive Companion for Music Theory</p>
+                <div className="mt-4">
+                    <a
+                        className="github-button"
+                        href="https://github.com/Emmotte/music-tools"
+                        data-icon="octicon-star"
+                        data-size="large"
+                        data-show-count="true"
+                        aria-label="Star Emmotte/music-tools on GitHub">
+                        Star
+                    </a>
+                </div>
+                <p className="text-lg text-gray-400 mt-4">Your Interactive Companion for Music Theory</p>
             </header>
 
             <main className="w-full max-w-7xl bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-6">
@@ -316,7 +345,10 @@ const App: React.FC = () => {
                 </div>
             </main>
              <footer className="w-full max-w-7xl mt-8 text-center text-gray-500 text-sm">
-                <p>Built for learning and exploration. Data adapted from <a href="https://github.com/ShirelleW/RiffTheoryBackend" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">RiffTheoryBackend</a>.</p>
+                <p>This application is currently in beta. All feedback is welcome!</p>
+                <a href="https://github.com/Emmotte/music-tools/issues" target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-cyan-400 hover:text-cyan-300 transition-colors">
+                    Report an Issue on GitHub
+                </a>
             </footer>
         </div>
     );

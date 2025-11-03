@@ -94,5 +94,5 @@ export const BASS_TUNING: Tuning = {
   notes: ['E1', 'A1', 'D2', 'G2']
 };
 
-export const FRET_COUNT = 12;
+export const FRET_COUNT = 24;
 export const PIANO_KEY_COUNT = 24; // 2 octaves

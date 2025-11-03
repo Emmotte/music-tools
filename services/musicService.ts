@@ -8,6 +8,18 @@ export const getNoteName = (note: string): string => {
     return note.substring(0, 1);
 };
 
+export const getFretForNoteOnString = (note: string, stringNote: string): number => {
+    const openNoteName = getNoteName(stringNote);
+    const openNoteIndex = NOTES.indexOf(openNoteName);
+    const targetNoteIndex = NOTES.indexOf(note);
+    if (openNoteIndex === -1 || targetNoteIndex === -1) return -1;
+
+    let fret = targetNoteIndex - openNoteIndex;
+    if (fret < 0) fret += 12;
+    return fret;
+};
+
+
 export const getFullNoteOnFret = (openStringNote: string, fret: number): string => {
     const openNoteName = getNoteName(openStringNote);
     const octaveMatch = openStringNote.match(/\d+$/);

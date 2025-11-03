@@ -6,24 +6,13 @@ import {
     PIANO_KEY_COUNT, CHORD_TYPE_TO_MOVABLE_SHAPES, 
     GUITAR_MOVABLE_SHAPES, NOTES 
 } from './constants';
-import { getNotesFromIntervals, getNoteName, identifyChord } from './services/musicService';
+import { getNotesFromIntervals, getNoteName, identifyChord, getFretForNoteOnString } from './services/musicService';
 import Piano from './components/Piano';
 import Fretboard from './components/Fretboard';
 import Controls from './components/Controls';
 import Metronome from './components/Metronome';
 import ChordDiagram from './components/ChordDiagram';
 import Tuner from './components/Tuner';
-
-const getFretForNoteOnString = (note: string, stringNote: string): number => {
-    const openNoteName = getNoteName(stringNote);
-    const openNoteIndex = NOTES.indexOf(openNoteName);
-    const targetNoteIndex = NOTES.indexOf(note);
-    if (openNoteIndex === -1 || targetNoteIndex === -1) return -1;
-
-    let fret = targetNoteIndex - openNoteIndex;
-    if (fret < 0) fret += 12;
-    return fret;
-};
 
 const noteSorter = (a: string, b: string): number => {
     const aMatch = a.match(/([A-G]#?)(\d+)/);
@@ -154,7 +143,7 @@ const App: React.FC = () => {
             if (rootFret >= 0 && rootFret <= FRET_COUNT) {
                 const finalFrets = shape.frets.map(f => (f === -1 ? -1 : f + rootFret));
                 
-                if (Math.max(...finalFrets) > FRET_COUNT + 4) continue;
+                if (Math.max(...finalFrets) > FRET_COUNT) continue;
 
                 const finalBarres = rootFret > 0 ? shape.barres?.map(b => ({
                     ...b,
@@ -280,7 +269,7 @@ const App: React.FC = () => {
                             </div>
                         )}
                         {viewMode === 'Chord Identifier' && <ChordIdentifierDisplay />}
-                        <Fretboard {...commonProps} tuning={GUITAR_TUNING.notes} fretCount={FRET_COUNT} />
+                        <Fretboard {...commonProps} tuning={GUITAR_TUNING.notes} maxFretCount={FRET_COUNT} />
                     </div>
                 );
             case 'Bass':
@@ -293,7 +282,7 @@ const App: React.FC = () => {
                             </p>
                         }
                         {viewMode === 'Chord Identifier' && <ChordIdentifierDisplay />}
-                        <Fretboard {...commonProps} tuning={BASS_TUNING.notes} fretCount={FRET_COUNT} />
+                        <Fretboard {...commonProps} tuning={BASS_TUNING.notes} maxFretCount={FRET_COUNT} />
                     </div>
                 );
             default:

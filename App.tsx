@@ -210,8 +210,8 @@ const App: React.FC = () => {
         switch (instrument) {
             case 'Piano':
                 if (viewMode === 'Tuner') return null; // Should not happen due to useEffect
-                if (viewMode === 'Chord Identifier') return <div className="flex flex-col items-center gap-8 w-full"><ChordIdentifierDisplay /><Piano {...commonProps} keyCount={PIANO_KEY_COUNT} /></div>;
-                return <Piano {...commonProps} keyCount={PIANO_KEY_COUNT} />;
+                if (viewMode === 'Chord Identifier') return <div className="flex flex-col items-center gap-8 w-full"><ChordIdentifierDisplay /><Piano {...commonProps} /></div>;
+                return <Piano {...commonProps} />;
             case 'Guitar':
                 if (viewMode === 'Tuner') return <Tuner />;
                  return (

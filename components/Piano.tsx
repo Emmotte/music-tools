@@ -5,7 +5,6 @@ import { getNoteName } from '../services/musicService';
 interface PianoProps {
     notesToHighlight: string[];
     rootNote: string | null;
-    keyCount: number;
     viewMode: ViewMode;
     onNoteSelect?: (note: string) => void;
 }
@@ -21,7 +20,7 @@ const PIANO_LAYOUT = [
 ];
 
 const START_OCTAVE = 3;
-const WHITE_KEYS_TO_RENDER = 15; // Approx 2 octaves
+const WHITE_KEYS_TO_RENDER = 14; // Exactly 2 octaves
 
 const Piano: React.FC<PianoProps> = ({ notesToHighlight, rootNote, viewMode, onNoteSelect }) => {
     

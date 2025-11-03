@@ -1,0 +1,325 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { InstrumentType, Scale, Chord, ViewMode } from './types';
+import { 
+    INSTRUMENTS, SCALES, CHORDS, GUITAR_TUNING, BASS_TUNING, FRET_COUNT, 
+    PIANO_KEY_COUNT, CHORD_TYPE_TO_MOVABLE_SHAPES, 
+    GUITAR_MOVABLE_SHAPES, NOTES 
+} from './constants';
+import { getNotesFromIntervals, getNoteName, identifyChord } from './services/musicService';
+import Piano from './components/Piano';
+import Fretboard from './components/Fretboard';
+import Controls from './components/Controls';
+import Metronome from './components/Metronome';
+import ChordDiagram from './components/ChordDiagram';
+import Tuner from './components/Tuner';
+
+const getFretForNoteOnString = (note: string, stringNote: string): number => {
+    const openNoteName = getNoteName(stringNote);
+    const openNoteIndex = NOTES.indexOf(openNoteName);
+    const targetNoteIndex = NOTES.indexOf(note);
+    if (openNoteIndex === -1 || targetNoteIndex === -1) return -1;
+
+    let fret = targetNoteIndex - openNoteIndex;
+    if (fret < 0) fret += 12;
+    return fret;
+};
+
+const noteSorter = (a: string, b: string): number => {
+    const aMatch = a.match(/([A-G]#?)(\d+)/);
+    const bMatch = b.match(/([A-G]#?)(\d+)/);
+    if (!aMatch || !bMatch) return a.localeCompare(b);
+    
+    const [, aName, aOctaveStr] = aMatch;
+    const [, bName, bOctaveStr] = bMatch;
+
+    const aOctave = parseInt(aOctaveStr, 10);
+    const bOctave = parseInt(bOctaveStr, 10);
+
+    if (aOctave !== bOctave) {
+        return aOctave - bOctave;
+    }
+
+    return NOTES.indexOf(aName) - NOTES.indexOf(bName);
+};
+
+
+const App: React.FC = () => {
+    const [instrument, setInstrument] = useState<InstrumentType>('Piano');
+    const [rootNote, setRootNote] = useState<string>('C');
+    const [selectedScale, setSelectedScale] = useState<Scale>(SCALES[0]);
+    const [selectedChord, setSelectedChord] = useState<Omit<Chord, 'diagram'>>(CHORDS[0]);
+    const [viewMode, setViewMode] = useState<ViewMode>('Scales');
+    const [selectedVoicingIndex, setSelectedVoicingIndex] = useState(0);
+
+    // State for Chord Identifier
+    const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+    const [identifiedChord, setIdentifiedChord] = useState<string | null>(null);
+    const [identifiedRoot, setIdentifiedRoot] = useState<string | null>(null);
+
+
+    // Reset voicing index when core chord parameters change
+    useEffect(() => {
+        setSelectedVoicingIndex(0);
+    }, [rootNote, selectedChord, instrument]);
+    
+    // If user switches to piano while in tuner mode, switch to scales
+    useEffect(() => {
+        if (instrument === 'Piano' && viewMode === 'Tuner') {
+            setViewMode('Scales');
+        }
+    }, [instrument, viewMode]);
+
+    // Clear selected notes when changing view mode
+    useEffect(() => {
+        setSelectedNotes([]);
+    }, [viewMode]);
+
+    // Perform chord identification when selected notes change
+    useEffect(() => {
+        if (viewMode === 'Chord Identifier') {
+            if (selectedNotes.length > 1) {
+                // Explicitly strip octaves before identification to ensure correctness.
+                const notesWithoutOctaves = selectedNotes.map(note => getNoteName(note));
+                const result = identifyChord(notesWithoutOctaves);
+
+                if (result) {
+                    // result.root is now guaranteed to be octave-less.
+                    setIdentifiedChord(`${result.root} ${result.name}`);
+                    setIdentifiedRoot(result.root);
+                } else {
+                    setIdentifiedChord('Chord not identified');
+                    setIdentifiedRoot(null);
+                }
+            } else {
+                setIdentifiedChord(null);
+                setIdentifiedRoot(null);
+            }
+        }
+    }, [selectedNotes, viewMode]);
+
+    const notesToHighlight = useMemo(() => {
+        if (viewMode === 'Chord Identifier') return selectedNotes;
+        if (viewMode !== 'Scales' && viewMode !== 'Chords') return [];
+        const intervals = viewMode === 'Scales' ? selectedScale.intervals : selectedChord.intervals;
+        return getNotesFromIntervals(rootNote, intervals);
+    }, [rootNote, selectedScale, selectedChord, viewMode, selectedNotes]);
+
+    const activeRootNote = useMemo(() => {
+        return viewMode === 'Chord Identifier' ? identifiedRoot : rootNote;
+    }, [viewMode, rootNote, identifiedRoot]);
+
+    const handleNoteSelect = (note: string) => {
+        if (viewMode !== 'Chord Identifier') return;
+        setSelectedNotes(prev => 
+            prev.includes(note) 
+                ? prev.filter(n => n !== note) 
+                : [...prev, note]
+        );
+    };
+
+    const possibleChordVoicings = useMemo(() => {
+        if (instrument !== 'Guitar' || viewMode !== 'Chords') return [];
+
+        const shapeNames = CHORD_TYPE_TO_MOVABLE_SHAPES[selectedChord.name];
+        if (!shapeNames) return [];
+
+        const voicings: { diagram: Chord['diagram'], position: number }[] = [];
+
+        for (const shapeName of shapeNames) {
+            const shape = GUITAR_MOVABLE_SHAPES[shapeName];
+            if (!shape) continue;
+
+            const openStringNote = GUITAR_TUNING.notes[shape.rootString];
+            const rootFret = getFretForNoteOnString(rootNote, openStringNote);
+            
+            if (rootFret >= 0 && rootFret <= FRET_COUNT) {
+                const finalFrets = shape.frets.map(f => (f === -1 ? -1 : f + rootFret));
+                
+                if (Math.max(...finalFrets) > FRET_COUNT + 4) continue;
+
+                const finalBarres = rootFret > 0 ? shape.barres?.map(b => ({
+                    ...b,
+                    fret: rootFret,
+                })) : undefined;
+
+                voicings.push({
+                    diagram: {
+                        frets: finalFrets,
+                        fingers: shape.fingers,
+                        barres: finalBarres,
+                    },
+                    position: rootFret,
+                });
+            }
+        }
+        
+        voicings.sort((a, b) => {
+            const minFretA = Math.min(...a.diagram.frets.filter(f => f >= 0));
+            const minFretB = Math.min(...b.diagram.frets.filter(f => f >= 0));
+            return minFretA - minFretB;
+        });
+        
+        return voicings;
+
+    }, [instrument, viewMode, rootNote, selectedChord]);
+    
+    const activeChordDiagram = possibleChordVoicings[selectedVoicingIndex]?.diagram;
+
+    const startingFretForDiagram = useMemo(() => {
+        if (!activeChordDiagram) return 0;
+        const { frets } = activeChordDiagram;
+        const positiveFrets = frets.filter(f => f > 0);
+        
+        if (positiveFrets.length === 0) return 0;
+        if (frets.includes(0)) return 0;
+
+        return Math.min(...positiveFrets);
+    }, [activeChordDiagram]);
+    
+    const ChordIdentifierDisplay = () => {
+        // Fix: Explicitly type `a` and `b` as strings to resolve TypeScript inference issue.
+        const displayedNotes = [...new Set(selectedNotes.map(getNoteName))].sort((a: string, b: string) => NOTES.indexOf(a) - NOTES.indexOf(b));
+
+        return (
+            <div className="w-full max-w-md flex-shrink-0 text-center p-4 bg-gray-900/50 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-300">Chord Identifier</h3>
+                <p className="text-sm text-gray-400 mb-4">Click notes on the instrument to identify a chord.</p>
+                <div className="min-h-[3rem] bg-gray-800 rounded-md p-2 flex items-center justify-center flex-wrap gap-2 mb-4 shadow-inner">
+                    {displayedNotes.length > 0 ? displayedNotes.map(n => <span key={n} className="px-2 py-1 bg-gray-600 rounded text-sm font-mono">{n}</span>) : <span className="text-gray-500">No notes selected</span>}
+                </div>
+                <div className="min-h-[2rem] text-2xl font-bold text-cyan-400">
+                    {identifiedChord || '...'}
+                </div>
+                {selectedNotes.length > 0 && (
+                    <button onClick={() => setSelectedNotes([])} className="mt-4 px-4 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-md shadow transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 focus:ring-offset-gray-800">
+                        Clear Selection
+                    </button>
+                )}
+            </div>
+        );
+    };
+
+    const renderInstrument = () => {
+        const commonProps = {
+            notesToHighlight: notesToHighlight,
+            rootNote: activeRootNote,
+            viewMode: viewMode,
+            onNoteSelect: handleNoteSelect,
+            selectedNotes: viewMode === 'Chord Identifier' ? selectedNotes : [],
+        };
+        switch (instrument) {
+            case 'Piano':
+                if (viewMode === 'Tuner') return null; // Should not happen due to useEffect
+                if (viewMode === 'Chord Identifier') return <div className="flex flex-col items-center gap-8 w-full"><ChordIdentifierDisplay /><Piano {...commonProps} keyCount={PIANO_KEY_COUNT} /></div>;
+                return <Piano {...commonProps} keyCount={PIANO_KEY_COUNT} />;
+            case 'Guitar':
+                if (viewMode === 'Tuner') return <Tuner />;
+                 return (
+                    <div className="flex flex-col items-center gap-8 w-full">
+                        {viewMode === 'Chords' && (
+                            <div className="w-full max-w-xs flex-shrink-0">
+                                <h3 className="text-center font-semibold text-lg mb-2 text-gray-300">{rootNote}{selectedChord.diagramName} Chord</h3>
+                                {activeChordDiagram ? (
+                                    <>
+                                        <ChordDiagram 
+                                            diagram={activeChordDiagram} 
+                                            tuning={GUITAR_TUNING.notes}
+                                            chordName={`${rootNote}${selectedChord.diagramName} Chord`}
+                                        />
+                                        
+                                        {startingFretForDiagram > 0 && (
+                                            <p className="text-center text-gray-400 mt-2 text-sm">
+                                                Position starts at fret {startingFretForDiagram}
+                                            </p>
+                                        )}
+                                        
+                                        {possibleChordVoicings.length > 1 && (
+                                            <div className="flex items-center justify-between mt-4">
+                                                <button 
+                                                    onClick={() => setSelectedVoicingIndex(prev => (prev - 1 + possibleChordVoicings.length) % possibleChordVoicings.length)}
+                                                    className="px-4 py-1 bg-gray-600 hover:bg-gray-500 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+                                                >
+                                                    &larr; Prev
+                                                </button>
+                                                <p className="text-sm font-medium text-gray-400">
+                                                    Voicing {selectedVoicingIndex + 1} of {possibleChordVoicings.length}
+                                                </p>
+                                                <button 
+                                                    onClick={() => setSelectedVoicingIndex(prev => (prev + 1) % possibleChordVoicings.length)}
+                                                    className="px-4 py-1 bg-gray-600 hover:bg-gray-500 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+                                                >
+                                                    Next &rarr;
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="bg-gray-700 p-4 rounded-lg shadow-inner flex items-center justify-center h-[230px]">
+                                        <p className="text-gray-400 text-center">No diagram available for this chord.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {viewMode === 'Chord Identifier' && <ChordIdentifierDisplay />}
+                        <Fretboard {...commonProps} tuning={GUITAR_TUNING.notes} fretCount={FRET_COUNT} />
+                    </div>
+                );
+            case 'Bass':
+                if (viewMode === 'Tuner') return <Tuner />;
+                 return (
+                    <div className="flex flex-col items-center w-full gap-8">
+                        {viewMode === 'Chords' && 
+                            <p className="text-center text-gray-400 text-sm bg-gray-900/50 px-3 py-1 rounded-md">
+                                Showing all chord tones. Fretboard diagrams are for visualization.
+                            </p>
+                        }
+                        {viewMode === 'Chord Identifier' && <ChordIdentifierDisplay />}
+                        <Fretboard {...commonProps} tuning={BASS_TUNING.notes} fretCount={FRET_COUNT} />
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased">
+            <header className="w-full max-w-7xl mb-8 text-center">
+                <h1 className="text-4xl sm:text-5xl font-bold text-cyan-400 tracking-wider">
+                    Music Tools
+                </h1>
+                <p className="text-lg text-gray-400 mt-2">Your Interactive Companion for Music Theory</p>
+            </header>
+
+            <main className="w-full max-w-7xl bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-6">
+                <Controls
+                    instrument={instrument}
+                    setInstrument={setInstrument}
+                    rootNote={rootNote}
+                    setRootNote={setRootNote}
+                    selectedScale={selectedScale}
+                    setSelectedScale={setSelectedScale}
+                    selectedChord={selectedChord}
+                    setSelectedChord={setSelectedChord}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                />
+                <div className="mt-8 flex flex-col lg:flex-row gap-8">
+                    <div className="lg:flex-grow relative overflow-x-auto pb-4 flex justify-center">
+                         <div className="pt-4 inline-block">
+                            {renderInstrument()}
+                        </div>
+                    </div>
+                    <aside className="lg:w-72 flex-shrink-0">
+                        <Metronome />
+                    </aside>
+                </div>
+            </main>
+             <footer className="w-full max-w-7xl mt-8 text-center text-gray-500 text-sm">
+                <p>Built for learning and exploration. Data adapted from <a href="https://github.com/ShirelleW/RiffTheoryBackend" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">RiffTheoryBackend</a>.</p>
+            </footer>
+        </div>
+    );
+};
+
+export default App;

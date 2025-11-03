@@ -1,0 +1,7 @@
+{
+  "name": "Music Tools",
+  "description": "An interactive suite of tools for musicians. Visualize scales and chords, use a metronome, a tuner, and identify chords on piano, guitar, and bass.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

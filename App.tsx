@@ -58,6 +58,22 @@ const App: React.FC = () => {
 
     const [showBetaBanner, setShowBetaBanner] = useState(true);
 
+    // Dynamically load the GitHub buttons script to ensure it runs after the button is rendered.
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = "https://buttons.github.io/buttons.js";
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+
+        return () => {
+            // Clean up the script when the component unmounts.
+            const existingScript = document.querySelector('script[src="https://buttons.github.io/buttons.js"]');
+            if (existingScript) {
+                document.body.removeChild(existingScript);
+            }
+        };
+    }, []);
 
     // Reset voicing index when core chord parameters change
     useEffect(() => {
@@ -313,6 +329,7 @@ const App: React.FC = () => {
                         data-icon="octicon-star"
                         data-size="large"
                         data-show-count="true"
+                        data-color-scheme="no-preference: dark; light: dark; dark: dark;"
                         aria-label="Star Emmotte/music-tools on GitHub">
                         Star
                     </a>

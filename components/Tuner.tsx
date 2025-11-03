@@ -46,7 +46,14 @@ const Tuner: React.FC<TunerProps> = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             
-            // FIX: Use a cross-browser compatible way to instantiate AudioContext to avoid constructor errors on older browsers.
+            // Fix: Correctly instantiate AudioContext for cross-browser compatibility.
+            // The constructor is called without arguments to support both modern AudioContext
+            // and the legacy webkitAudioContext, and we check if it's supported first.
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) {
+              throw new Error('AudioContext is not supported by your browser.');
+            }
+            // FIX: Instantiating directly to avoid potential TypeScript inference issues with the intermediate variable.
             const context = new (window.AudioContext || (window as any).webkitAudioContext)();
             audioContextRef.current = context;
 

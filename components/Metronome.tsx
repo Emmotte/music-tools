@@ -4,7 +4,7 @@ const Metronome: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [bpm, setBpm] = useState(120);
     const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
-    const [beatValue, setBeatValue] = useState(4); // For UI, doesn't change audio logic
+    const [beatValue, setBeatValue] = useState(4); // For UI, now affects audio logic
     const [isEditingBpm, setIsEditingBpm] = useState(false);
     const [visualCurrentBeat, setVisualCurrentBeat] = useState(-1);
     
@@ -57,7 +57,8 @@ const Metronome: React.FC = () => {
 
         while (nextNoteTimeRef.current < audioContextRef.current.currentTime + scheduleAheadTime) {
             scheduleNote(currentBeatRef.current, nextNoteTimeRef.current);
-            const secondsPerBeat = 60.0 / bpm;
+            // BPM is treated as quarter notes per minute. Adjust beat duration based on time signature denominator.
+            const secondsPerBeat = (60.0 / bpm) * (4 / beatValue);
             nextNoteTimeRef.current += secondsPerBeat;
             currentBeatRef.current = (currentBeatRef.current + 1);
         }
@@ -83,7 +84,7 @@ const Metronome: React.FC = () => {
         return () => {
             clearInterval(schedulerIntervalRef.current);
         };
-    }, [isPlaying, bpm, beatsPerMeasure]);
+    }, [isPlaying, bpm, beatsPerMeasure, beatValue]);
 
     // Reset beat count if time signature changes while playing
     useEffect(() => {
@@ -184,20 +185,20 @@ const Metronome: React.FC = () => {
                         id="beatsPerMeasure"
                         value={beatsPerMeasure}
                         onChange={(e) => setBeatsPerMeasure(Number(e.target.value))}
-                        className="bg-transparent text-white focus:outline-none"
+                        className="bg-transparent text-white focus:outline-none cursor-pointer"
                         aria-label="Beats per measure"
                     >
-                        {[2,3,4,5,6,7].map(n => <option key={n} value={n}>{n}</option>)}
+                        {[2,3,4,5,6,7].map(n => <option className="bg-gray-800 text-black" key={n} value={n}>{n}</option>)}
                     </select>
                     <span>/</span>
                     <select
                         value={beatValue}
                         onChange={(e) => setBeatValue(Number(e.target.value))}
-                         className="bg-transparent text-white focus:outline-none"
+                         className="bg-transparent text-white focus:outline-none cursor-pointer"
                          aria-label="Beat value"
                     >
-                        <option value={4}>4</option>
-                        <option value={8}>8</option>
+                        <option className="bg-gray-800 text-black" value={4}>4</option>
+                        <option className="bg-gray-800 text-black" value={8}>8</option>
                     </select>
                 </div>
             </div>

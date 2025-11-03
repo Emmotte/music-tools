@@ -53,8 +53,8 @@ const Tuner: React.FC<TunerProps> = () => {
             if (!AudioContext) {
               throw new Error('AudioContext is not supported by your browser.');
             }
-            // FIX: Instantiating directly to avoid potential TypeScript inference issues with the intermediate variable.
-            const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+            // Fix: Using the aliased constructor is cleaner and avoids redundancy.
+            const context = new AudioContext();
             audioContextRef.current = context;
 
             const source = context.createMediaStreamSource(stream);

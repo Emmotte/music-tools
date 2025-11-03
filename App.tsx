@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { InstrumentType, Scale, Chord, ViewMode } from './types';
 import { 
@@ -322,6 +323,7 @@ const App: React.FC = () => {
                 <h1 className="text-4xl sm:text-5xl font-bold text-cyan-400 tracking-wider">
                     Music Tools
                 </h1>
+                <p className="text-lg text-gray-400 mt-4">Your Interactive Companion for Music Theory</p>
                 <div className="mt-4">
                     <a
                         className="github-button"
@@ -334,7 +336,6 @@ const App: React.FC = () => {
                         Star
                     </a>
                 </div>
-                <p className="text-lg text-gray-400 mt-4">Your Interactive Companion for Music Theory</p>
             </header>
 
             <main className="w-full max-w-7xl bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-6">

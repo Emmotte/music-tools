@@ -1,4 +1,5 @@
 import { NOTES, CHORDS } from '../constants';
+import { Scale } from '../types';
 
 export const getNoteName = (note: string): string => {
     // Handles notes like 'E4' -> 'E', 'C#3' -> 'C#'

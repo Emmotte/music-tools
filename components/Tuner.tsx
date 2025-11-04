@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { NOTES } from '../constants';
 
@@ -46,8 +49,8 @@ const Tuner: React.FC<TunerProps> = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             
-            // FIX: Directly instantiate AudioContext to fix a type error where the constructor was incorrectly expected to have arguments.
-            const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+            // FIX: The AudioContext constructor now requires an options object. Pass an empty object to satisfy the API.
+            const context = new (window.AudioContext || (window as any).webkitAudioContext)({});
             audioContextRef.current = context;
 
             const source = context.createMediaStreamSource(stream);

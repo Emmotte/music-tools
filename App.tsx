@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { InstrumentType, Scale, Chord, ViewMode } from './types';
 import { 
-    INSTRUMENTS, SCALES, CHORDS, GUITAR_TUNING, BASS_TUNING, FRET_COUNT, 
+    INSTRUMENTS, CHORDS, GUITAR_TUNING, BASS_TUNING, FRET_COUNT, 
     PIANO_KEY_COUNT, CHORD_TYPE_TO_MOVABLE_SHAPES, 
-    GUITAR_MOVABLE_SHAPES, NOTES 
+    GUITAR_MOVABLE_SHAPES, NOTES, SCALES
 } from './constants';
 import { getNotesFromIntervals, getNoteName, identifyChord, getFretForNoteOnString } from './services/musicService';
 import Piano from './components/Piano';
@@ -13,29 +13,12 @@ import Controls from './components/Controls';
 import Metronome from './components/Metronome';
 import ChordDiagram from './components/ChordDiagram';
 import Tuner from './components/Tuner';
-
-const noteSorter = (a: string, b: string): number => {
-    const aMatch = a.match(/([A-G]#?)(\d+)/);
-    const bMatch = b.match(/([A-G]#?)(\d+)/);
-    if (!aMatch || !bMatch) return a.localeCompare(b);
-    
-    const [, aName, aOctaveStr] = aMatch;
-    const [, bName, bOctaveStr] = bMatch;
-
-    const aOctave = parseInt(aOctaveStr, 10);
-    const bOctave = parseInt(bOctaveStr, 10);
-
-    if (aOctave !== bOctave) {
-        return aOctave - bOctave;
-    }
-
-    return NOTES.indexOf(aName) - NOTES.indexOf(bName);
-};
-
+import MobileNav from './components/MobileNav';
 
 const App: React.FC = () => {
     const [instrument, setInstrument] = useState<InstrumentType>('Piano');
     const [rootNote, setRootNote] = useState<string>('C');
+    const [scales] = useState<Scale[]>(SCALES);
     const [selectedScale, setSelectedScale] = useState<Scale>(SCALES[0]);
     const [selectedChord, setSelectedChord] = useState<Omit<Chord, 'diagram'>>(CHORDS[0]);
     const [viewMode, setViewMode] = useState<ViewMode>('Scales');
@@ -47,8 +30,10 @@ const App: React.FC = () => {
     const [identifiedRoot, setIdentifiedRoot] = useState<string | null>(null);
 
     const [showBetaBanner, setShowBetaBanner] = useState(true);
+    
+    // State for mobile metronome modal
+    const [showMetronome, setShowMetronome] = useState(false);
 
-    // Dynamically load the GitHub buttons script to ensure it runs after the button is rendered.
     useEffect(() => {
         const script = document.createElement('script');
         script.src = "https://buttons.github.io/buttons.js";
@@ -57,7 +42,6 @@ const App: React.FC = () => {
         document.body.appendChild(script);
 
         return () => {
-            // Clean up the script when the component unmounts.
             const existingScript = document.querySelector('script[src="https://buttons.github.io/buttons.js"]');
             if (existingScript) {
                 document.body.removeChild(existingScript);
@@ -65,33 +49,21 @@ const App: React.FC = () => {
         };
     }, []);
 
-    // Reset voicing index when core chord parameters change
     useEffect(() => {
         setSelectedVoicingIndex(0);
     }, [rootNote, selectedChord, instrument]);
-    
-    // If user switches to piano while in tuner mode, switch to scales
-    useEffect(() => {
-        if (instrument === 'Piano' && viewMode === 'Tuner') {
-            setViewMode('Scales');
-        }
-    }, [instrument, viewMode]);
 
-    // Clear selected notes when changing view mode
     useEffect(() => {
         setSelectedNotes([]);
     }, [viewMode]);
 
-    // Perform chord identification when selected notes change
     useEffect(() => {
         if (viewMode === 'Chord Identifier') {
             if (selectedNotes.length > 1) {
-                // Explicitly strip octaves before identification to ensure correctness.
                 const notesWithoutOctaves = selectedNotes.map(note => getNoteName(note));
                 const result = identifyChord(notesWithoutOctaves);
 
                 if (result) {
-                    // result.root is now guaranteed to be octave-less.
                     setIdentifiedChord(`${result.root} ${result.name}`);
                     setIdentifiedRoot(result.root);
                 } else {
@@ -108,6 +80,7 @@ const App: React.FC = () => {
     const notesToHighlight = useMemo(() => {
         if (viewMode === 'Chord Identifier') return selectedNotes;
         if (viewMode !== 'Scales' && viewMode !== 'Chords') return [];
+
         const intervals = viewMode === 'Scales' ? selectedScale.intervals : selectedChord.intervals;
         return getNotesFromIntervals(rootNote, intervals);
     }, [rootNote, selectedScale, selectedChord, viewMode, selectedNotes]);
@@ -185,7 +158,6 @@ const App: React.FC = () => {
     }, [activeChordDiagram]);
     
     const ChordIdentifierDisplay = () => {
-        // Fix: Explicitly type `a` and `b` as strings to resolve TypeScript inference issue.
         const displayedNotes = [...new Set(selectedNotes.map(getNoteName))].sort((a: string, b: string) => NOTES.indexOf(a) - NOTES.indexOf(b));
 
         return (
@@ -208,6 +180,11 @@ const App: React.FC = () => {
     };
 
     const renderInstrument = () => {
+        // If tuner mode is active, always show the tuner regardless of instrument.
+        if (viewMode === 'Tuner') {
+            return <Tuner />;
+        }
+
         const commonProps = {
             notesToHighlight: notesToHighlight,
             rootNote: activeRootNote,
@@ -215,13 +192,12 @@ const App: React.FC = () => {
             onNoteSelect: handleNoteSelect,
             selectedNotes: viewMode === 'Chord Identifier' ? selectedNotes : [],
         };
+
         switch (instrument) {
             case 'Piano':
-                if (viewMode === 'Tuner') return null; // Should not happen due to useEffect
                 if (viewMode === 'Chord Identifier') return <div className="flex flex-col items-center gap-8 w-full"><ChordIdentifierDisplay /><Piano {...commonProps} /></div>;
                 return <Piano {...commonProps} />;
             case 'Guitar':
-                if (viewMode === 'Tuner') return <Tuner />;
                  return (
                     <div className="flex flex-col items-center gap-8 w-full">
                         {viewMode === 'Chords' && (
@@ -273,7 +249,6 @@ const App: React.FC = () => {
                     </div>
                 );
             case 'Bass':
-                if (viewMode === 'Tuner') return <Tuner />;
                  return (
                     <div className="flex flex-col items-center w-full gap-8">
                         {viewMode === 'Chords' && 
@@ -291,7 +266,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased">
+        <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased pb-24 lg:pb-8">
             {showBetaBanner && (
                 <div className="w-full max-w-7xl mb-4 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-3 rounded-lg text-center text-sm flex items-center justify-between shadow-lg" role="alert">
                     <div>
@@ -308,11 +283,11 @@ const App: React.FC = () => {
                     </button>
                 </div>
             )}
-            <header className="w-full max-w-7xl mb-8 text-center">
+            <header className="w-full max-w-7xl mb-6 text-center">
                 <h1 className="text-4xl sm:text-5xl font-bold text-cyan-400 tracking-wider">
                     Music Tools
                 </h1>
-                <p className="text-lg text-gray-400 mt-4">Your Interactive Companion for Music Theory</p>
+                <p className="text-lg text-gray-400 mt-2 sm:mt-4">Your Interactive Companion for Music Theory</p>
                 <div className="mt-4">
                     <a
                         className="github-button"
@@ -327,30 +302,66 @@ const App: React.FC = () => {
                 </div>
             </header>
 
-            <main className="w-full max-w-7xl bg-gray-800 rounded-lg shadow-2xl p-4 sm:p-6">
-                <Controls
-                    instrument={instrument}
-                    setInstrument={setInstrument}
-                    rootNote={rootNote}
-                    setRootNote={setRootNote}
-                    selectedScale={selectedScale}
-                    setSelectedScale={setSelectedScale}
-                    selectedChord={selectedChord}
-                    setSelectedChord={setSelectedChord}
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
-                />
-                <div className="mt-8 flex flex-col lg:flex-row gap-8">
-                    <div className="lg:flex-grow relative overflow-x-auto pb-4 flex justify-center">
-                         <div className="pt-4 inline-block">
+            <main className="w-full max-w-7xl bg-gray-800 rounded-lg shadow-2xl lg:p-6">
+                 {/* --- Desktop Layout --- */}
+                <div className="hidden lg:block">
+                    <Controls
+                        instrument={instrument} setInstrument={setInstrument}
+                        rootNote={rootNote} setRootNote={setRootNote}
+                        scales={scales}
+                        selectedScale={selectedScale} 
+                        setSelectedScale={setSelectedScale}
+                        selectedChord={selectedChord} setSelectedChord={setSelectedChord}
+                        viewMode={viewMode} setViewMode={setViewMode}
+                    />
+                    <div className="mt-8 flex flex-row gap-8">
+                        <div className="flex-grow relative overflow-x-auto pb-4 flex justify-center">
+                            <div className="pt-4 inline-block">
+                                {renderInstrument()}
+                            </div>
+                        </div>
+                        <aside className="w-72 flex-shrink-0">
+                            <Metronome />
+                        </aside>
+                    </div>
+                </div>
+
+                {/* --- Mobile Layout --- */}
+                <div className="lg:hidden">
+                    <div className="p-4">
+                         <Controls
+                            instrument={instrument} setInstrument={setInstrument}
+                            rootNote={rootNote} setRootNote={setRootNote}
+                            scales={scales}
+                            selectedScale={selectedScale} 
+                            setSelectedScale={setSelectedScale}
+                            selectedChord={selectedChord} setSelectedChord={setSelectedChord}
+                            viewMode={viewMode} setViewMode={setViewMode}
+                            isMobileView
+                        />
+                    </div>
+                    <div className="relative overflow-x-auto pb-4 flex justify-center -mx-4 sm:-mx-6">
+                        <div className="pt-4 inline-block">
                             {renderInstrument()}
                         </div>
                     </div>
-                    <aside className="lg:w-72 flex-shrink-0">
-                        <Metronome />
-                    </aside>
                 </div>
             </main>
+
+            {showMetronome && (
+                <div className="lg:hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-40 flex items-center justify-center" onClick={() => setShowMetronome(false)}>
+                    <div className="w-full max-w-xs p-4" onClick={e => e.stopPropagation()}>
+                        <Metronome />
+                    </div>
+                </div>
+            )}
+
+            <MobileNav 
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                setShowMetronome={setShowMetronome}
+            />
+
              <footer className="w-full max-w-7xl mt-8 text-center text-gray-500 text-sm">
                 <p>This application is currently in beta. All feedback is welcome!</p>
                 <a href="https://github.com/Emmotte/music-tools/issues" target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-cyan-400 hover:text-cyan-300 transition-colors">

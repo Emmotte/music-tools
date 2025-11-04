@@ -68,7 +68,8 @@ const Metronome: React.FC = () => {
     useEffect(() => {
         if (isPlaying) {
             if (!audioContextRef.current) {
-                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                // FIX: Pass an empty options object to the AudioContext constructor to satisfy strict type checking which expects one argument.
+                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({});
             }
              if (audioContextRef.current.state === 'suspended') {
                 audioContextRef.current.resume();

@@ -1,24 +1,27 @@
 import { Scale, Tuning, InstrumentType, Chord } from './types';
 
+export const SCALES: Scale[] = [
+  { name: 'Major', intervals: [2,2,1,2,2,2,1] },
+  { name: 'Natural Minor', intervals: [2,1,2,2,1,2,2] },
+  { name: 'Harmonic Minor', intervals: [2,1,2,2,1,3,1] },
+  { name: 'Melodic Minor', intervals: [2,1,2,2,2,2,1] },
+  { name: 'Major Pentatonic', intervals: [2,2,3,2,3] },
+  { name: 'Minor Pentatonic', intervals: [3,2,2,3,2] },
+  { name: 'Blues', intervals: [3,2,1,1,3,2] },
+  { name: 'Dorian', intervals: [2,1,2,2,2,1,2] },
+  { name: 'Phrygian', intervals: [1,2,2,2,1,2,2] },
+  { name: 'Lydian', intervals: [2,2,2,1,2,2,1] },
+  { name: 'Mixolydian', intervals: [2,2,1,2,2,1,2] },
+  { name: 'Locrian', intervals: [1,2,2,1,2,2,2] },
+  { name: 'Whole Tone', intervals: [2,2,2,2,2,2] },
+  { name: 'Diminished (H-W)', intervals: [1,2,1,2,1,2,1,2] },
+  { name: 'Diminished (W-H)', intervals: [2,1,2,1,2,1,2,1] },
+  { name: 'Augmented', intervals: [3,1,3,1,3,1] }
+];
+
 export const NOTES: string[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
 export const INSTRUMENTS: InstrumentType[] = ['Piano', 'Guitar', 'Bass'];
-
-export const SCALES: Scale[] = [
-  { name: 'Major', intervals: [2, 2, 1, 2, 2, 2, 1] },
-  { name: 'Natural Minor', intervals: [2, 1, 2, 2, 1, 2, 2] },
-  { name: 'Harmonic Minor', intervals: [2, 1, 2, 2, 1, 3, 1] },
-  { name: 'Melodic Minor', intervals: [2, 1, 2, 2, 2, 2, 1] },
-  { name: 'Major Pentatonic', intervals: [2, 2, 3, 2, 3] },
-  { name: 'Minor Pentatonic', intervals: [3, 2, 2, 3, 2] },
-  { name: 'Blues', intervals: [3, 2, 1, 1, 3, 2] },
-  { name: 'Dorian', intervals: [2, 1, 2, 2, 2, 1, 2] },
-  { name: 'Phrygian', intervals: [1, 2, 2, 2, 1, 2, 2] },
-  { name: 'Lydian', intervals: [2, 2, 2, 1, 2, 2, 1] },
-  { name: 'Mixolydian', intervals: [2, 2, 1, 2, 2, 1, 2] },
-  { name: 'Locrian', intervals: [1, 2, 2, 1, 2, 2, 2] },
-  { name: 'Chromatic', intervals: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
-];
 
 export const CHORDS: Omit<Chord, 'diagram'>[] = [
     { name: 'Major Triad', intervals: [4, 3], diagramName: '' },

@@ -1,5 +1,5 @@
 export type InstrumentType = 'Piano' | 'Guitar' | 'Bass';
-export type ViewMode = 'Scales' | 'Chords' | 'Tuner' | 'Chord Identifier';
+export type ViewMode = 'Scales' | 'Chords' | 'Tuner' | 'Chord Identifier' | 'Metronome';
 
 export interface Scale {
   name: string;

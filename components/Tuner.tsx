@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { NOTES } from '../constants';
 
@@ -49,7 +46,8 @@ const Tuner: React.FC<TunerProps> = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             
-            // FIX: The AudioContext constructor now requires an options object. Pass an empty object to satisfy the API.
+            // Fix: The AudioContext constructor requires an options object in modern browsers.
+            // Passing an empty object ensures compatibility.
             const context = new (window.AudioContext || (window as any).webkitAudioContext)({});
             audioContextRef.current = context;
 

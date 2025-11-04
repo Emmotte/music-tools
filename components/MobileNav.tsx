@@ -1,11 +1,11 @@
 
+
 import React from 'react';
 import { ViewMode } from '../types';
 
 interface MobileNavProps {
     viewMode: ViewMode;
     setViewMode: (mode: ViewMode) => void;
-    setShowMetronome: (show: boolean) => void;
 }
 
 const ScalesIcon = ({ isActive }: { isActive: boolean }) => (
@@ -48,22 +48,14 @@ const TunerIcon = ({ isActive }: { isActive: boolean }) => (
     </svg>
 );
 
-const MobileNav: React.FC<MobileNavProps> = ({ viewMode, setViewMode, setShowMetronome }) => {
-    
-    const handleTabClick = (mode: ViewMode | 'Metronome') => {
-        if (mode === 'Metronome') {
-            setShowMetronome(true);
-        } else {
-            setViewMode(mode);
-        }
-    };
+const MobileNav: React.FC<MobileNavProps> = ({ viewMode, setViewMode }) => {
     
     const navItems = [
-        { id: 'Scales', label: 'Scales', icon: ScalesIcon, isActive: viewMode === 'Scales', onClick: () => handleTabClick('Scales') },
-        { id: 'Chords', label: 'Chords', icon: ChordsIcon, isActive: viewMode === 'Chords', onClick: () => handleTabClick('Chords') },
-        { id: 'Chord Identifier', label: 'Chord ID', icon: ChordIdIcon, isActive: viewMode === 'Chord Identifier', onClick: () => handleTabClick('Chord Identifier') },
-        { id: 'Tuner', label: 'Tuner', icon: TunerIcon, isActive: viewMode === 'Tuner', onClick: () => handleTabClick('Tuner') },
-        { id: 'Metronome', label: 'Metronome', icon: MetronomeIcon, isActive: false, onClick: () => handleTabClick('Metronome') },
+        { id: 'Scales', label: 'Scales', icon: ScalesIcon, isActive: viewMode === 'Scales', onClick: () => setViewMode('Scales') },
+        { id: 'Chords', label: 'Chords', icon: ChordsIcon, isActive: viewMode === 'Chords', onClick: () => setViewMode('Chords') },
+        { id: 'Chord Identifier', label: 'Chord ID', icon: ChordIdIcon, isActive: viewMode === 'Chord Identifier', onClick: () => setViewMode('Chord Identifier') },
+        { id: 'Tuner', label: 'Tuner', icon: TunerIcon, isActive: viewMode === 'Tuner', onClick: () => setViewMode('Tuner') },
+        { id: 'Metronome', label: 'Metronome', icon: MetronomeIcon, isActive: viewMode === 'Metronome', onClick: () => setViewMode('Metronome') },
     ];
 
     return (

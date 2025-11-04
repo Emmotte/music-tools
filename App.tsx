@@ -30,9 +30,6 @@ const App: React.FC = () => {
     const [identifiedRoot, setIdentifiedRoot] = useState<string | null>(null);
 
     const [showBetaBanner, setShowBetaBanner] = useState(true);
-    
-    // State for mobile metronome modal
-    const [showMetronome, setShowMetronome] = useState(false);
 
     useEffect(() => {
         const script = document.createElement('script');
@@ -180,11 +177,6 @@ const App: React.FC = () => {
     };
 
     const renderInstrument = () => {
-        // If tuner mode is active, always show the tuner regardless of instrument.
-        if (viewMode === 'Tuner') {
-            return <Tuner />;
-        }
-
         const commonProps = {
             notesToHighlight: notesToHighlight,
             rootNote: activeRootNote,
@@ -265,6 +257,8 @@ const App: React.FC = () => {
         }
     };
 
+    const isMobileSelectionDisabled = viewMode === 'Chord Identifier';
+
     return (
         <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased pb-24 lg:pb-8">
             {showBetaBanner && (
@@ -314,11 +308,17 @@ const App: React.FC = () => {
                         selectedChord={selectedChord} setSelectedChord={setSelectedChord}
                         viewMode={viewMode} setViewMode={setViewMode}
                     />
-                    <div className="mt-8 flex flex-row gap-8">
-                        <div className="flex-grow relative overflow-x-auto pb-4 flex justify-center">
-                            <div className="pt-4 inline-block">
-                                {renderInstrument()}
-                            </div>
+                    <div className="mt-8 flex flex-row gap-8 min-h-[500px]">
+                        <div className="flex-grow flex justify-center items-start pt-4">
+                            {viewMode === 'Tuner' ? (
+                                <Tuner />
+                            ) : (
+                                <div className="relative overflow-x-auto pb-4 w-full flex justify-center">
+                                    <div className="inline-block">
+                                        {renderInstrument()}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <aside className="w-72 flex-shrink-0">
                             <Metronome />
@@ -328,38 +328,96 @@ const App: React.FC = () => {
 
                 {/* --- Mobile Layout --- */}
                 <div className="lg:hidden">
-                    <div className="p-4">
-                         <Controls
-                            instrument={instrument} setInstrument={setInstrument}
-                            rootNote={rootNote} setRootNote={setRootNote}
-                            scales={scales}
-                            selectedScale={selectedScale} 
-                            setSelectedScale={setSelectedScale}
-                            selectedChord={selectedChord} setSelectedChord={setSelectedChord}
-                            viewMode={viewMode} setViewMode={setViewMode}
-                            isMobileView
-                        />
-                    </div>
-                    <div className="relative overflow-x-auto pb-4 flex justify-center -mx-4 sm:-mx-6">
-                        <div className="pt-4 inline-block">
-                            {renderInstrument()}
+                    {viewMode === 'Tuner' ? (
+                        <div className="p-4 flex justify-center">
+                            <Tuner />
                         </div>
-                    </div>
+                    ) : viewMode === 'Metronome' ? (
+                        <div className="p-4 flex justify-center">
+                           <Metronome />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="p-4 flex flex-col gap-4">
+                                {/* Instrument Selector */}
+                                <div>
+                                    <div className="flex items-center bg-gray-900 rounded-md p-1 shadow-inner">
+                                        {INSTRUMENTS.map((inst) => (
+                                            <button
+                                                key={inst}
+                                                onClick={() => setInstrument(inst)}
+                                                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                                                    instrument === inst ? 'bg-cyan-500 text-white shadow' : 'text-gray-300 hover:bg-gray-700'
+                                                }`}
+                                            >
+                                                {inst}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Note and Scale/Chord Selectors */}
+                                <div className={`grid grid-cols-2 gap-3 ${isMobileSelectionDisabled ? 'opacity-25 pointer-events-none' : ''} transition-opacity`}>
+                                    <div>
+                                        <label htmlFor="mobileRootNote" className="block text-xs font-medium text-gray-400 mb-1">Root</label>
+                                        <select
+                                            id="mobileRootNote"
+                                            value={rootNote}
+                                            onChange={(e) => setRootNote(e.target.value)}
+                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-md p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                        >
+                                            {NOTES.map((note) => (
+                                                <option key={note} value={note}>{note}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="mobile-scale-or-chord" className="block text-xs font-medium text-gray-400 mb-1">{viewMode === 'Scales' ? 'Scale' : 'Chord'}</label>
+                                        {viewMode === 'Scales' ? (
+                                            <select
+                                                id="mobile-scale-or-chord"
+                                                value={selectedScale.name}
+                                                onChange={(e) => {
+                                                    const newScale = scales.find(s => s.name === e.target.value);
+                                                    if (newScale) setSelectedScale(newScale);
+                                                }}
+                                                className="w-full bg-gray-700 border border-gray-600 text-white rounded-md p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                            >
+                                                {scales.map((scale) => (
+                                                    <option key={scale.name} value={scale.name}>{scale.name}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <select
+                                                id="mobile-scale-or-chord"
+                                                value={selectedChord.name}
+                                                onChange={(e) => {
+                                                    const newChord = CHORDS.find(c => c.name === e.target.value);
+                                                    if (newChord) setSelectedChord(newChord);
+                                                }}
+                                                className="w-full bg-gray-700 border border-gray-600 text-white rounded-md p-2 text-sm focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                            >
+                                                {CHORDS.map((chord) => (
+                                                    <option key={chord.name} value={chord.name}>{chord.name}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="relative overflow-x-auto pb-4 flex justify-center -mx-4 sm:-mx-6">
+                                <div className="pt-4 inline-block">
+                                    {renderInstrument()}
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </main>
-
-            {showMetronome && (
-                <div className="lg:hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-40 flex items-center justify-center" onClick={() => setShowMetronome(false)}>
-                    <div className="w-full max-w-xs p-4" onClick={e => e.stopPropagation()}>
-                        <Metronome />
-                    </div>
-                </div>
-            )}
 
             <MobileNav 
                 viewMode={viewMode}
                 setViewMode={setViewMode}
-                setShowMetronome={setShowMetronome}
             />
 
              <footer className="w-full max-w-7xl mt-8 text-center text-gray-500 text-sm">

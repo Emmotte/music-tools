@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { ViewMode } from '../types';
 import { getNoteName, getFullNoteOnFret, getFretForNoteOnString } from '../services/musicService';
@@ -11,7 +12,7 @@ interface FretboardProps {
     onNoteSelect?: (note: string) => void;
 }
 
-const VIEWPORT_FRET_COUNT = 7;
+const VIEWPORT_FRET_COUNT = 12;
 
 const Fretboard: React.FC<FretboardProps> = ({ tuning, maxFretCount, notesToHighlight, rootNote, viewMode, onNoteSelect }) => {
     const isIdentifierMode = viewMode === 'Chord Identifier';
@@ -85,7 +86,7 @@ const Fretboard: React.FC<FretboardProps> = ({ tuning, maxFretCount, notesToHigh
                                     return (
                                         <div 
                                             key={fret} 
-                                            className={`w-10 h-10 flex items-center justify-center bg-gray-700 border-r-4 border-gray-500 ${isIdentifierMode ? 'cursor-pointer' : ''}`}
+                                            className={`w-7 h-10 flex items-center justify-center bg-gray-700 border-r-4 border-gray-500 ${isIdentifierMode ? 'cursor-pointer' : ''}`}
                                             onClick={handleFretClick}
                                         >
                                             {isNoteInSet && (
@@ -101,7 +102,7 @@ const Fretboard: React.FC<FretboardProps> = ({ tuning, maxFretCount, notesToHigh
                                 return (
                                     <div 
                                         key={fret} 
-                                        className={`relative w-20 h-10 flex items-center justify-center border-r-2 border-gray-600 bg-gradient-to-b from-gray-700 to-gray-800 ${isIdentifierMode ? 'cursor-pointer' : ''} ${isFirstColumn && !isNutVisible ? 'border-l-4 border-gray-500' : ''}`}
+                                        className={`relative w-14 h-10 flex items-center justify-center border-r-2 border-gray-600 bg-gradient-to-b from-gray-700 to-gray-800 ${isIdentifierMode ? 'cursor-pointer' : ''} ${isFirstColumn && !isNutVisible ? 'border-l-4 border-gray-500' : ''}`}
                                         onClick={handleFretClick}
                                     >
                                         <div className="absolute w-full h-px bg-gray-500 top-1/2 -translate-y-1/2 z-0"></div>
@@ -131,7 +132,7 @@ const Fretboard: React.FC<FretboardProps> = ({ tuning, maxFretCount, notesToHigh
                          return (
                             <div 
                                 key={fret} 
-                                className={`${isFirstColumn && isNutVisible ? 'w-10' : 'w-20'} text-center text-xs text-gray-400 pt-2`}
+                                className={`${isFirstColumn && isNutVisible ? 'w-7' : 'w-14'} text-center text-xs text-gray-400 pt-2`}
                             >
                                 {fret}
                             </div>

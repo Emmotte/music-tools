@@ -15,7 +15,6 @@ interface ControlsProps {
     setSelectedChord: (chord: Chord) => void;
     viewMode: ViewMode;
     setViewMode: (mode: ViewMode) => void;
-    isMobileView?: boolean;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -30,12 +29,10 @@ const Controls: React.FC<ControlsProps> = ({
     setSelectedChord,
     viewMode,
     setViewMode,
-    isMobileView = false,
 }) => {
     return (
         <div>
-             {isMobileView && <h2 className="text-2xl font-bold text-center mb-6 text-gray-200">Controls</h2>}
-            <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${isMobileView ? '' : 'p-4 rounded-lg bg-gray-700/50'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg bg-gray-700/50">
                 {/* Instrument Selector */}
                 <div className="md:col-span-1">
                     <label className="block text-sm font-medium text-gray-400 mb-2 text-center md:text-left">Instrument</label>
@@ -58,7 +55,7 @@ const Controls: React.FC<ControlsProps> = ({
                 <div className="md:col-span-1">
                     <label className="block text-sm font-medium text-gray-400 mb-2 text-center md:text-left">Mode</label>
                     <div className="flex items-center bg-gray-800 rounded-md p-1 shadow-inner">
-                        {(['Scales', 'Chords', 'Chord Identifier'] as ViewMode[]).map((mode) => (
+                        {(['Scales', 'Chords', 'Chord Identifier', 'Tuner'] as ViewMode[]).map((mode) => (
                             <button
                                 key={mode}
                                 onClick={() => setViewMode(mode)}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ViewMode } from '../types';
 import { getNoteName } from '../services/musicService';
@@ -20,7 +21,7 @@ const PIANO_LAYOUT = [
 ];
 
 const START_OCTAVE = 3;
-const WHITE_KEYS_TO_RENDER = 14; // Exactly 2 octaves
+const WHITE_KEYS_TO_RENDER = 10; // ~1.5 octaves for mobile
 
 const Piano: React.FC<PianoProps> = ({ notesToHighlight, rootNote, viewMode, onNoteSelect }) => {
     
@@ -68,10 +69,10 @@ const Piano: React.FC<PianoProps> = ({ notesToHighlight, rootNote, viewMode, onN
         const cursorClass = isIdentifierMode ? 'cursor-pointer' : '';
 
         renderedKeys.push(
-            <div key={i} className="relative h-full w-10 md:w-12 flex-shrink-0">
+            <div key={i} className="relative h-full w-9 flex-shrink-0">
                 {/* White Key */}
                 <div 
-                    className={`h-full w-full border-2 rounded-b-md flex items-end justify-center pb-2 transition-colors ${whiteKeyClasses} ${cursorClass}`}
+                    className={`h-full w-full border-2 rounded-b-md flex items-end justify-center pb-2 text-sm transition-colors ${whiteKeyClasses} ${cursorClass}`}
                     onClick={() => handleKeyClick(whiteKeyFullName)}
                 >
                     {whiteKeyNoteName}
@@ -80,7 +81,7 @@ const Piano: React.FC<PianoProps> = ({ notesToHighlight, rootNote, viewMode, onN
                 {/* Black Key */}
                 {blackKeyFullName && (
                     <div 
-                        className={`absolute top-0 right-[-14px] md:right-[-16px] z-10 h-2/3 w-7 md:w-8 border-2 rounded-b-md flex items-end justify-center pb-1 text-xs font-semibold transition-colors ${blackKeyClasses} ${cursorClass}`}
+                        className={`absolute top-0 right-[-12px] z-10 h-2/3 w-6 border-2 rounded-b-md flex items-end justify-center pb-1 text-xs font-semibold transition-colors ${blackKeyClasses} ${cursorClass}`}
                         onClick={(e) => { e.stopPropagation(); handleKeyClick(blackKeyFullName); }}
                     >
                         {blackKeyNoteName}

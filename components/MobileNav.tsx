@@ -59,7 +59,13 @@ const MobileNav: React.FC<MobileNavProps> = ({ viewMode, setViewMode }) => {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-gray-800 border-t border-gray-700 shadow-lg flex justify-around items-center z-50 lg:hidden">
+        <nav
+            className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 shadow-lg flex justify-around items-center z-50 lg:hidden"
+            style={{
+                height: `calc(4rem + env(safe-area-inset-bottom))`,
+                paddingBottom: `env(safe-area-inset-bottom)`
+            }}
+        >
             {navItems.map(item => (
                 <button
                     key={item.id}

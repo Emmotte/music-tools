@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { InstrumentType, Scale, Chord, ViewMode } from './types';
 import { 
     INSTRUMENTS, CHORDS, GUITAR_TUNING, BASS_TUNING, FRET_COUNT, 
@@ -260,7 +261,8 @@ const App: React.FC = () => {
     const isMobileSelectionDisabled = viewMode === 'Chord Identifier';
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased pb-24 lg:pb-8">
+        <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-8 flex flex-col items-center antialiased pb-32 lg:pb-8">
+            <Analytics />
             {showBetaBanner && (
                 <div className="w-full max-w-7xl mb-4 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-4 py-3 rounded-lg text-center text-sm flex items-center justify-between shadow-lg" role="alert">
                     <div>

@@ -34,7 +34,7 @@ const Tuner: React.FC<TunerProps> = () => {
     const analyserRef = useRef<AnalyserNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const animationFrameRef = useRef<number>();
+    const animationFrameRef = useRef<number | null>(null);
 
     const startListening = async () => {
         try {
@@ -46,8 +46,8 @@ const Tuner: React.FC<TunerProps> = () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             
-            // Fix: The AudioContext constructor requires an options object in modern browsers.
-            // Passing an empty object ensures compatibility.
+            // Create a new AudioContext in a cross-browser-compatible way.
+            // Fix: Provide an empty options object to the AudioContext constructor.
             const context = new (window.AudioContext || (window as any).webkitAudioContext)({});
             audioContextRef.current = context;
 

@@ -1,5 +1,8 @@
 import { Scale, Tuning, InstrumentType, Chord } from './types';
 
+// Data structures for scales and chords are inspired by and compatible with:
+// https://github.com/ShirelleW/RiffTheoryBackend
+
 export const SCALES: Scale[] = [
   { name: 'Major', intervals: [2,2,1,2,2,2,1] },
   { name: 'Natural Minor', intervals: [2,1,2,2,1,2,2] },

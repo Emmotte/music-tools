@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Music Tools: Interactive Music Theory</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,10 +22,13 @@
         background: #4b5563; /* gray-600 */
       }
     </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "@vercel/analytics/react": "https://esm.sh/@vercel/analytics@latest/react",
+    "@vercel/analytics/": "https://aistudiocdn.com/@vercel/analytics@^1.5.0/",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/"
   }
